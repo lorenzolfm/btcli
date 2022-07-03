@@ -1,11 +1,22 @@
 use crate::utils::ToByteArray;
 
+/// A struct representing a Secp256k1 key
+///
+/// A key is just a number.
+/// We represent that number as a vector of bytes.
+/// Each byte is represented as an 8 bit unsigned integer.
 #[derive(Debug, PartialEq)]
 pub struct Key {
+    /// Unsigned 8 bit integer vector representing the key.
     bytes: Vec<u8>,
 }
 
 impl Key {
+    /// Returns a Result enum with a Key or an Error
+    ///
+    /// # Arguments
+    ///
+    /// * `key_as_str` - A string slice that holds the hexadecimal representation of the key
     fn new(key_as_str: &str) -> Result<Self, hex::FromHexError> {
         let bytes = key_as_str.to_string().to_byte_array()?;
 
