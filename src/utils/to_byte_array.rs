@@ -29,4 +29,12 @@ mod to_byte_array_tests {
         assert_eq("0488b21e", vec![0x04, 0x88, 0xb2, 0x1e]);
     }
 
+    #[test]
+    fn should_return_array_half_as_long_as_the_string_input() {
+        let input = "0123456789".to_string();
+        let expected = input.len() / 2;
+
+        assert_eq!(input.to_byte_array().len(), expected)
+    }
+
 }
