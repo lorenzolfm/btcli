@@ -4,7 +4,12 @@ pub trait ToByteArray {
 
 impl ToByteArray for String {
     fn to_byte_array(self) -> Vec<u8> {
-        hex::decode(self).unwrap()
+        match self.len() % 2 == 0 {
+            true => hex::decode(self).unwrap(),
+            false => hex::decode(
+                format!("{:0>width$}", self, width = self.len() + 1)
+            ).unwrap()
+        }
     }
 }
 
@@ -35,6 +40,13 @@ mod to_byte_array_tests {
         let expected = input.len() / 2;
 
         assert_eq!(input.to_byte_array().len(), expected)
+    }
+
+    #[test]
+    fn should_insert_padding_if_input_is_odd() {
+        let input = "012".to_string();
+
+        assert_eq!(input.to_byte_array(), vec![0x00, 0x12])
     }
 
 }
