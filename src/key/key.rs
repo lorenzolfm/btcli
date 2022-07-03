@@ -11,11 +11,17 @@ impl Key {
 
         Ok(Key { bytes })
     }
+
+    /// Returns the key encoded as a string of hexadecimal numbers
+    fn as_hex_string(self) -> String {
+        hex::encode(self.bytes)
+    }
 }
 
 #[cfg(test)]
 mod key_tests {
     use super::Key;
+    use crate::key::constants::PRIVATE_KEY;
 
     #[test]
     fn test_constructor() {
@@ -30,5 +36,13 @@ mod key_tests {
             Key::new("0123456789abcdefg"),
             Err(hex::FromHexError::InvalidHexCharacter { c: 'g', index: 17 })
         )
+    }
+
+    #[test]
+    fn should_return_bytes_encoded_as_hex_string() {
+        let expected = PRIVATE_KEY.to_string();
+        let actual = Key::new(PRIVATE_KEY).unwrap().as_hex_string();
+
+        assert_eq!(expected, actual);
     }
 }
