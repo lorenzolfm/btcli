@@ -8,7 +8,7 @@ use crate::utils::ToByteArray;
 #[derive(Debug, PartialEq)]
 pub struct Key {
     /// Unsigned 8 bit integer vector representing the key.
-    bytes: Vec<u8>,
+    pub bytes: Vec<u8>,
 }
 
 impl Key {
@@ -17,14 +17,14 @@ impl Key {
     /// # Arguments
     ///
     /// * `key_as_str` - A string slice that holds the hexadecimal representation of the key
-    fn new(key_as_str: &str) -> Result<Self, hex::FromHexError> {
+    pub fn new(key_as_str: &str) -> Result<Self, hex::FromHexError> {
         let bytes = key_as_str.to_string().to_byte_array()?;
 
         Ok(Key { bytes })
     }
 
     /// Returns the key encoded as a string of hexadecimal numbers
-    fn as_hex_string(self) -> String {
+    pub fn as_hex_string(self) -> String {
         hex::encode(self.bytes)
     }
 }
