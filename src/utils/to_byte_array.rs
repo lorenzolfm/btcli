@@ -1,14 +1,16 @@
 pub trait ToByteArray {
-    fn to_byte_array(self) -> Vec<u8>;
+    fn to_byte_array(self) -> Result<Vec<u8>, hex::FromHexError>;
 }
 
 impl ToByteArray for String {
-    fn to_byte_array(self) -> Vec<u8> {
+    fn to_byte_array(self) -> Result<Vec<u8>, hex::FromHexError> {
         match self.len() % 2 == 0 {
-            true => hex::decode(self).unwrap(),
-            false => hex::decode(
-                format!("{:0>width$}", self, width = self.len() + 1)
-            ).unwrap()
+            true => Ok(hex::decode(self)?),
+            false => Ok(hex::decode(format!(
+                "{:0>width$}",
+                self,
+                width = self.len() + 1
+            ))?),
         }
     }
 }
@@ -18,10 +20,7 @@ mod to_byte_array_tests {
     use super::ToByteArray;
 
     fn assert_eq(input: &str, expected: Vec<u8>) {
-        assert_eq!(
-            input.to_string().to_byte_array(),
-            expected,
-        )
+        assert_eq!(input.to_string().to_byte_array().unwrap(), expected,)
     }
 
     #[test]
@@ -39,14 +38,21 @@ mod to_byte_array_tests {
         let input = "0123456789".to_string();
         let expected = input.len() / 2;
 
-        assert_eq!(input.to_byte_array().len(), expected)
+        assert_eq!(input.to_byte_array().unwrap().len(), expected)
     }
 
     #[test]
     fn should_insert_padding_if_input_is_odd() {
         let input = "012".to_string();
 
-        assert_eq!(input.to_byte_array(), vec![0x00, 0x12])
+        assert_eq!(input.to_byte_array().unwrap(), vec![0x00, 0x12])
     }
 
+    #[test]
+    fn test_wrong_input() {
+        assert_eq!(
+            "vf".to_string().to_byte_array(),
+            Err(hex::FromHexError::InvalidHexCharacter { c: 'v', index: 0 })
+        );
+    }
 }
