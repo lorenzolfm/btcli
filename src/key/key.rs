@@ -1,3 +1,5 @@
+use crypto::{digest::Digest, sha2::Sha256};
+
 use crate::utils::ToByteArray;
 
 /// A struct representing a Secp256k1 key
@@ -27,6 +29,20 @@ impl Key {
     pub fn as_hex_string(self) -> String {
         hex::encode(self.bytes)
     }
+
+    pub fn append_checksum(&mut self) {
+        let mut buff = [0x00; 32];
+        let mut hasher = Sha256::new();
+
+        hasher.input(&self.bytes);
+        hasher.result(&mut buff);
+        hasher.reset();
+
+        hasher.input(&buff);
+        hasher.result(&mut buff);
+
+        self.bytes.append(&mut buff[0..4].to_vec());
+    }
 }
 
 #[cfg(test)]
@@ -55,5 +71,24 @@ mod key_tests {
         let actual = Key::from_str(PRIVATE_KEY).unwrap().as_hex_string();
 
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn should_append_exactly_four_bytes() {
+        let mut key = Key::from_str("01234").unwrap();
+        let length = key.bytes.len();
+
+        key.append_checksum();
+
+        assert_eq!(length + 4, key.bytes.len())
+    }
+
+    #[test]
+    fn should_append_expected_bytes_as_checksum() {
+        let mut key = Key::from_str("344b160161c7b41a82fe8d6aebb55eaab753cb60").unwrap();
+        key.append_checksum();
+        let expected = "344b160161c7b41a82fe8d6aebb55eaab753cb60dabd0ca2";
+
+        assert_eq!(key.as_hex_string(), expected);
     }
 }
