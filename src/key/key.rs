@@ -57,7 +57,10 @@ mod key_tests {
     fn test_constructor() {
         assert_eq!(Key::from_str("0").unwrap().bytes, vec![0x00]);
         assert_eq!(Key::from_str("00").unwrap().bytes, vec![0x00]);
-        assert_eq!(Key::from_str("012345").unwrap().bytes, vec![0x01, 0x23, 0x45])
+        assert_eq!(
+            Key::from_str("012345").unwrap().bytes,
+            vec![0x01, 0x23, 0x45]
+        )
     }
 
     #[test]
