@@ -30,6 +30,9 @@ impl Key {
         hex::encode(self.bytes)
     }
 
+    /// Computes and append the checksum to `self.bytes`.
+    ///
+    /// The checksum is SHA256(SHA256(self.bytes)).
     pub fn append_checksum(&mut self) {
         let mut buff = [0x00; 32];
         let mut hasher = Sha256::new();
