@@ -38,7 +38,7 @@ impl PrivateKey {
             privkey_as_str = format!("{:0>width$}", privkey_as_str, width = 64);
         }
 
-        let key = Key::new(&privkey_as_str)?;
+        let key = Key::from_str(&privkey_as_str)?;
 
         let less_than_curve_order = key.bytes < N.to_string().to_byte_array().unwrap();
 
@@ -53,18 +53,35 @@ impl PrivateKey {
         self.key.as_hex_string()
     }
 
-    /// Returns a hexadecimal string represinting the "compressed" private key
+    /// Returns a hexadecimal string representing the "compressed" private key.
     fn as_hex_compressed_string(mut self) -> String {
         self.key.bytes.push(0x01);
 
         self.key.as_hex_string()
+    }
+
+    /// Returns a bs58 encoded string representing the private key in the WIF format.
+    fn as_wif(&mut self) -> String {
+        self.key.bytes.insert(0, 0x80);
+        self.key.append_checksum();
+
+        bs58::encode(&self.key.bytes).into_string()
+    }
+
+    /// Returns a bs58 encoded string representing the private key in the WIF-compressed format.
+    fn as_wif_compressed(&mut self) -> String {
+        self.key.bytes.insert(0, 0x80);
+        self.key.bytes.push(0x01);
+        self.key.append_checksum();
+
+        bs58::encode(&self.key.bytes).into_string()
     }
 }
 
 #[cfg(test)]
 mod private_key_tests {
     use super::{PrivateKey, PrivateKeyError};
-    use crate::key::constants::{N, PRIVATE_KEY, COMPRESSED_PRIVATE_KEY};
+    use crate::key::constants::{COMPRESSED_PRIVATE_KEY, COMPRESSED_WIF, N, PRIVATE_KEY, WIF};
 
     #[test]
     fn constructor_should_return_private_key() {
@@ -93,7 +110,9 @@ mod private_key_tests {
             ))
         );
         assert_eq!(
-            PrivateKey::from_str("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD036414v"),
+            PrivateKey::from_str(
+                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD036414v"
+            ),
             Err(PrivateKeyError::InvalidHex(
                 hex::FromHexError::InvalidHexCharacter { c, index }
             ))
@@ -117,8 +136,23 @@ mod private_key_tests {
     #[test]
     fn should_append_compressed_suffix() {
         assert_eq!(
+            PrivateKey::from_str(PRIVATE_KEY)
+                .unwrap()
+                .as_hex_compressed_string(),
             COMPRESSED_PRIVATE_KEY,
-            PrivateKey::from_str(PRIVATE_KEY).unwrap().as_hex_compressed_string(),
+        )
+    }
+
+    #[test]
+    fn should_return_expected_wif_format() {
+        assert_eq!(PrivateKey::from_str(PRIVATE_KEY).unwrap().as_wif(), WIF,)
+    }
+
+    #[test]
+    fn should_return_expected_wif_compressed_format() {
+        assert_eq!(
+            PrivateKey::from_str(PRIVATE_KEY).unwrap().as_wif_compressed(),
+            COMPRESSED_WIF
         )
     }
 }
