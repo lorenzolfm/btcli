@@ -3,7 +3,7 @@ use crate::key::Key;
 use crate::utils::ToByteArray;
 
 #[derive(Debug, PartialEq)]
-enum PrivateKeyError {
+pub enum PrivateKeyError {
     GreaterThanCurveOrder,
     InvalidHex(hex::FromHexError),
 }
@@ -22,7 +22,7 @@ impl From<hex::FromHexError> for PrivateKeyError {
 /// n = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
 #[derive(Debug, PartialEq)]
 pub struct PrivateKey {
-    key: Key,
+    pub key: Key,
 }
 
 impl PrivateKey {
@@ -31,7 +31,7 @@ impl PrivateKey {
     /// # Arguments
     ///
     /// * `privkey` - Private key as a string slice of hexadecimals digits.
-    fn from_str(privkey_as_str: &str) -> Result<Self, PrivateKeyError> {
+    pub fn from_str(privkey_as_str: &str) -> Result<Self, PrivateKeyError> {
         let mut privkey_as_str = privkey_as_str.to_string();
 
         if privkey_as_str.len() < 64 {
