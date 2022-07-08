@@ -5,6 +5,7 @@ use crate::utils::ToByteArray;
 #[derive(Debug, PartialEq)]
 pub enum PrivateKeyError {
     GreaterThanCurveOrder,
+    InvalidSize,
     InvalidHex(hex::FromHexError),
 }
 
@@ -32,6 +33,10 @@ impl PrivateKey {
     ///
     /// * `privkey` - Private key as a string slice of hexadecimals digits.
     pub fn from_str(privkey_as_str: &str) -> Result<Self, PrivateKeyError> {
+        if privkey_as_str.len() > 64 {
+            return Err(PrivateKeyError::InvalidSize);
+        }
+
         let mut privkey_as_str = privkey_as_str.to_string();
 
         if privkey_as_str.len() < 64 {
@@ -153,6 +158,16 @@ mod private_key_tests {
         assert_eq!(
             PrivateKey::from_str(PRIVATE_KEY).unwrap().as_wif_compressed(),
             COMPRESSED_WIF
+        )
+    }
+
+    #[test]
+    fn should_throw_error_if_input_is_greater_than_64_digits() {
+        let pk = PrivateKey::from_str("1e99423a4ed27608a15a2616a2b0e9e52ced330ac530edcc32c8ffc6a526aeddd");
+
+        assert_eq!(
+            pk,
+            Err(PrivateKeyError::InvalidSize),
         )
     }
 }
