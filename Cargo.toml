@@ -9,3 +9,4 @@ edition = "2021"
 hex = "0.4.3"
 rust-crypto = "0.2.36"
 bs58 = "0.4.0"
+secp256k1 = {version = "0.22.1", features=["rand-std", "bitcoin_hashes"]}
