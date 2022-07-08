@@ -1,4 +1,4 @@
-use crypto::{digest::Digest, sha2::Sha256};
+use crypto::{digest::Digest, ripemd160::Ripemd160, sha2::Sha256};
 
 use crate::utils::ToByteArray;
 
@@ -46,12 +46,26 @@ impl Key {
 
         self.bytes.append(&mut buff[0..4].to_vec());
     }
+
+    pub fn hash160(self) -> Vec<u8> {
+        let mut buff = [0x00; 32];
+
+        let mut hasher = Sha256::new();
+        hasher.input(&self.bytes);
+        hasher.result(&mut buff);
+
+        let mut hasher = Ripemd160::new();
+        hasher.input(&buff);
+        hasher.result(&mut buff);
+
+        buff[0..20].to_vec()
+    }
 }
 
 #[cfg(test)]
 mod key_tests {
     use super::Key;
-    use crate::key::constants::PRIVATE_KEY;
+    use crate::key::constants::*;
 
     #[test]
     fn test_constructor() {
@@ -96,5 +110,39 @@ mod key_tests {
         let expected = "344b160161c7b41a82fe8d6aebb55eaab753cb60dabd0ca2";
 
         assert_eq!(key.as_hex_string(), expected);
+    }
+
+    fn get_hash160_length(input: &str) -> usize {
+        Key::from_str(input)
+            .unwrap()
+            .hash160()
+            .len()
+    }
+
+    #[test]
+    fn hash160_should_be_20_bytes_long() {
+        let expected = 20;
+
+        let actual = get_hash160_length(UNCOMPRESSED_PUBLIC_KEY);
+        assert_eq!(actual, expected);
+
+        let actual = get_hash160_length(COMPRESSED_PUBLIC_KEY);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn hash160_from_compressed_pubkey() {
+        assert_eq!(
+            Key::from_str(COMPRESSED_PUBLIC_KEY).unwrap().hash160(),
+            hex::decode("bbc1e42a39d05a4cc61752d6963b7f69d09bb27b").unwrap(),
+        )
+    }
+
+    #[test]
+    fn hash160_from_uncompressed_pubkey() {
+        assert_eq!(
+            Key::from_str(UNCOMPRESSED_PUBLIC_KEY).unwrap().hash160(),
+            hex::decode("211b74ca4686f81efda5641767fc84ef16dafe0b").unwrap(),
+        )
     }
 }
