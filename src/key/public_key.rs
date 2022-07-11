@@ -1,6 +1,8 @@
 use crate::key::{Key, PrivateKey};
 use secp256k1::{Secp256k1, SecretKey};
 
+type Coordinates = (String, String);
+
 pub struct PublicKey {
     compressed: Key,
     uncompressed: Key,
@@ -34,6 +36,13 @@ impl PublicKey {
         pkh.append_checksum();
 
         bs58::encode(&pkh.bytes).into_string()
+    }
+
+    fn get_coordinates(self) -> Coordinates {
+        (
+            hex::encode(&self.uncompressed.bytes[1..33]),
+            hex::encode(&self.uncompressed.bytes[33..]),
+        )
     }
 }
 
@@ -78,5 +87,19 @@ mod public_key_tests {
             "1424C2F4bC9JidNjjTUZCbUxv6Sa1Mt62x",
         )
 
+    }
+
+    #[test]
+    fn should_return_expected_coordinates_from_public_key() {
+        let pk = PrivateKey::from_str(constants::PRIVATE_KEY).unwrap();
+        let public_key = PublicKey::from_private_key(pk);
+
+        assert_eq!(
+            public_key.get_coordinates(),
+            (
+                "f028892bad7ed57d2fb57bf33081d5cfcf6f9ed3d3d7f159c2e2fff579dc341a".to_string(),
+                "07cf33da18bd734c600b96a72bbc4749d5141c90ec8ac328ae52ddfe2e505bdb".to_string(),
+            )
+        )
     }
 }
