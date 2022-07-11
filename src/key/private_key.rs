@@ -1,3 +1,5 @@
+use num::BigUint;
+
 use crate::key::constants::N;
 use crate::key::Key;
 use crate::utils::ToByteArray;
@@ -80,6 +82,11 @@ impl PrivateKey {
         self.key.append_checksum();
 
         bs58::encode(&self.key.bytes).into_string()
+    }
+
+    /// Returns the private key as decimal string
+    fn as_decimals(self) -> String {
+        format!("{}", BigUint::from_bytes_be(&self.key.bytes))
     }
 }
 
@@ -168,6 +175,17 @@ mod private_key_tests {
         assert_eq!(
             pk,
             Err(PrivateKeyError::InvalidSize),
+        )
+    }
+
+    #[test]
+    fn should_convert_to_expected_decimal_string() {
+        let pk = PrivateKey::from_str(PRIVATE_KEY).unwrap();
+        let expected = "13840170145645816737842251482747434280357113762558403558088249138233286766301";
+
+        assert_eq!(
+            pk.as_decimals(),
+            expected,
         )
     }
 }
