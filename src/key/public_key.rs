@@ -73,7 +73,7 @@ mod public_key_tests {
 
         assert_eq!(
             public_key.get_address_from_compressed(),
-            "1J7mdg5rbQyUHENYdx39WVWK7fsLpEoXZy",
+            constants::ADDRESS_FROM_COMPRESSED,
         )
     }
 
@@ -84,7 +84,7 @@ mod public_key_tests {
 
         assert_eq!(
             public_key.get_address_from_uncompressed(),
-            "1424C2F4bC9JidNjjTUZCbUxv6Sa1Mt62x",
+            constants::ADDRESS_FROM_UNCOMPRESSED,
         )
 
     }
