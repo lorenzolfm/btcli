@@ -1,5 +1,5 @@
 use crate::key::{Key, PrivateKey};
-use secp256k1::{Secp256k1, SecretKey};
+use secp256k1::{rand, Secp256k1, SecretKey};
 
 type Coordinates = (String, String);
 
@@ -43,6 +43,31 @@ impl PublicKey {
             hex::encode(&self.uncompressed.bytes[1..33]),
             hex::encode(&self.uncompressed.bytes[33..]),
         )
+    }
+
+    fn vanity_address(vanity: &str) -> String {
+        loop {
+            let secp = Secp256k1::new();
+
+            let secret_key = SecretKey::new(&mut rand::thread_rng());
+
+            let pubkey = secp256k1::PublicKey::from_secret_key(
+                &secp,
+                &secret_key,
+            );
+
+            let pubkey = PublicKey {
+                compressed: Key { bytes: pubkey.serialize().to_vec() },
+                uncompressed: Key { bytes: pubkey.serialize().to_vec() },
+            };
+
+            let compressed_address = &pubkey.get_address_from_compressed();
+            let prexix = &compressed_address.as_str()[0..vanity.len()];
+
+            if prexix == vanity {
+                return compressed_address.to_string()
+            }
+        }
     }
 }
 
@@ -101,5 +126,13 @@ mod public_key_tests {
                 "07cf33da18bd734c600b96a72bbc4749d5141c90ec8ac328ae52ddfe2e505bdb".to_string(),
             )
         )
+    }
+
+    #[test]
+    fn should_return_a_vanity_address() {
+        let prefix = "1Lo";
+        let vanity_address = PublicKey::vanity_address(prefix);
+
+        assert_eq!(&vanity_address[0..3], "1Lo");
     }
 }
