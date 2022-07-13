@@ -25,7 +25,7 @@ impl From<hex::FromHexError> for PrivateKeyError {
 /// n = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
 #[derive(Debug, PartialEq)]
 pub struct PrivateKey {
-    pub key: Key,
+    pub key: Vec<u8>,
 }
 
 impl PrivateKey {
@@ -45,9 +45,9 @@ impl PrivateKey {
             privkey_as_str = format!("{:0>width$}", privkey_as_str, width = 64);
         }
 
-        let key = Key::from_str(&privkey_as_str)?;
+        let key = Vec::from_str(&privkey_as_str)?;
 
-        let less_than_curve_order = key.bytes < N.to_string().to_byte_array().unwrap();
+        let less_than_curve_order = key < N.to_string().to_byte_array().unwrap();
 
         match less_than_curve_order {
             true => Ok(PrivateKey { key }),
@@ -56,37 +56,37 @@ impl PrivateKey {
     }
 
     /// Returns a hexadecimal string representing the private key
-    fn as_hex_string(self) -> String {
+    fn as_hex_string(&mut self) -> String {
         self.key.as_hex_string()
     }
 
     /// Returns a hexadecimal string representing the "compressed" private key.
     fn as_hex_compressed_string(mut self) -> String {
-        self.key.bytes.push(0x01);
+        self.key.push(0x01);
 
         self.key.as_hex_string()
     }
 
     /// Returns a bs58 encoded string representing the private key in the WIF format.
     fn as_wif(&mut self) -> String {
-        self.key.bytes.insert(0, 0x80);
+        self.key.insert(0, 0x80);
         self.key.append_checksum();
 
-        bs58::encode(&self.key.bytes).into_string()
+        bs58::encode(&self.key).into_string()
     }
 
     /// Returns a bs58 encoded string representing the private key in the WIF-compressed format.
     fn as_wif_compressed(&mut self) -> String {
-        self.key.bytes.insert(0, 0x80);
-        self.key.bytes.push(0x01);
+        self.key.insert(0, 0x80);
+        self.key.push(0x01);
         self.key.append_checksum();
 
-        bs58::encode(&self.key.bytes).into_string()
+        bs58::encode(&self.key).into_string()
     }
 
     /// Returns the private key as decimal string
     fn as_decimals(self) -> String {
-        format!("{}", BigUint::from_bytes_be(&self.key.bytes))
+        format!("{}", BigUint::from_bytes_be(&self.key))
     }
 }
 
@@ -97,14 +97,14 @@ mod private_key_tests {
 
     #[test]
     fn constructor_should_return_private_key() {
-        let pk = PrivateKey::from_str(PRIVATE_KEY).unwrap();
+        let mut pk = PrivateKey::from_str(PRIVATE_KEY).unwrap();
 
-        assert_eq!(pk.key.as_hex_string(), PRIVATE_KEY.to_string())
+        assert_eq!(pk.as_hex_string(), PRIVATE_KEY.to_string())
     }
 
     #[test]
     fn should_pad_if_input_is_not_32_bytes() {
-        let pk = PrivateKey::from_str("123").unwrap();
+        let mut pk = PrivateKey::from_str("123").unwrap();
         let expected = "0000000000000000000000000000000000000000000000000000000000000123";
 
         assert_eq!(pk.as_hex_string(), expected);

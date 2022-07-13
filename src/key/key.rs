@@ -2,56 +2,41 @@ use crypto::{digest::Digest, ripemd160::Ripemd160, sha2::Sha256};
 
 use crate::utils::ToByteArray;
 
-/// A struct representing a Secp256k1 key
-///
-/// A key is just a number.
-/// We represent that number as a vector of bytes.
-/// Each byte is represented as an 8 bit unsigned integer.
-#[derive(Debug, PartialEq)]
-pub struct Key {
-    /// Unsigned 8 bit integer vector representing the key.
-    pub bytes: Vec<u8>,
+pub trait Key {
+    fn from_str(s: &str) -> Result<Vec<u8>, hex::FromHexError>;
+    fn as_hex_string(&mut self) -> String;
+    fn append_checksum(&mut self) -> ();
+    fn hash160(self) -> Vec<u8>;
 }
 
-impl Key {
-    /// Returns a Result enum with a Key or an Error
-    ///
-    /// # Arguments
-    ///
-    /// * `key_as_str` - A string slice that holds the hexadecimal representation of the key
-    pub fn from_str(key_as_str: &str) -> Result<Self, hex::FromHexError> {
-        let bytes = key_as_str.to_string().to_byte_array()?;
-
-        Ok(Key { bytes })
+impl Key for Vec<u8> {
+    fn from_str(s: &str) -> Result<Vec<u8>, hex::FromHexError> {
+        Ok(s.to_string().to_byte_array()?)
     }
 
-    /// Returns the key encoded as a string of hexadecimal numbers
-    pub fn as_hex_string(self) -> String {
-        hex::encode(self.bytes)
+    fn as_hex_string(&mut self) -> String {
+        hex::encode(self)
     }
 
-    /// Computes and appends the checksum to `self.bytes`.
-    ///
-    /// The checksum is SHA256(SHA256(self.bytes)).
-    pub fn append_checksum(&mut self) {
+    fn append_checksum(&mut self) {
         let mut buff = [0x00; 32];
         let mut hasher = Sha256::new();
 
-        hasher.input(&self.bytes);
+        hasher.input(&self);
         hasher.result(&mut buff);
         hasher.reset();
 
         hasher.input(&buff);
         hasher.result(&mut buff);
 
-        self.bytes.append(&mut buff[0..4].to_vec());
+        self.append(&mut buff[0..4].to_vec());
     }
 
-    pub fn hash160(self) -> Vec<u8> {
+    fn hash160(self) -> Vec<u8> {
         let mut buff = [0x00; 32];
 
         let mut hasher = Sha256::new();
-        hasher.input(&self.bytes);
+        hasher.input(&self);
         hasher.result(&mut buff);
 
         let mut hasher = Ripemd160::new();
@@ -63,16 +48,16 @@ impl Key {
 }
 
 #[cfg(test)]
-mod key_tests {
-    use super::Key;
-    use crate::key::constants::*;
+mod keys_tests {
+    use super::*;
+    use crate::key::{PRIVATE_KEY, UNCOMPRESSED_PUBLIC_KEY, COMPRESSED_PUBLIC_KEY};
 
     #[test]
     fn test_constructor() {
-        assert_eq!(Key::from_str("0").unwrap().bytes, vec![0x00]);
-        assert_eq!(Key::from_str("00").unwrap().bytes, vec![0x00]);
+        assert_eq!(Vec::from_str("0").unwrap(), vec![0x00]);
+        assert_eq!(Vec::from_str("00").unwrap(), vec![0x00]);
         assert_eq!(
-            Key::from_str("012345").unwrap().bytes,
+            Vec::from_str("012345").unwrap(),
             vec![0x01, 0x23, 0x45]
         )
     }
@@ -80,7 +65,7 @@ mod key_tests {
     #[test]
     fn should_throw_error_if_invalid_character() {
         assert_eq!(
-            Key::from_str("0123456789abcdefg"),
+            Vec::from_str("0123456789abcdefg"),
             Err(hex::FromHexError::InvalidHexCharacter { c: 'g', index: 17 })
         )
     }
@@ -88,24 +73,24 @@ mod key_tests {
     #[test]
     fn should_return_bytes_encoded_as_hex_string() {
         let expected = PRIVATE_KEY.to_string();
-        let actual = Key::from_str(PRIVATE_KEY).unwrap().as_hex_string();
+        let actual = Vec::from_str(PRIVATE_KEY).unwrap().as_hex_string();
 
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn should_append_exactly_four_bytes() {
-        let mut key = Key::from_str("01234").unwrap();
-        let length = key.bytes.len();
+        let mut key = Vec::from_str("01234").unwrap();
+        let length = key.len();
 
         key.append_checksum();
 
-        assert_eq!(length + 4, key.bytes.len())
+        assert_eq!(length + 4, key.len())
     }
 
     #[test]
     fn should_append_expected_bytes_as_checksum() {
-        let mut key = Key::from_str("344b160161c7b41a82fe8d6aebb55eaab753cb60").unwrap();
+        let mut key = Vec::from_str("344b160161c7b41a82fe8d6aebb55eaab753cb60").unwrap();
         key.append_checksum();
         let expected = "344b160161c7b41a82fe8d6aebb55eaab753cb60dabd0ca2";
 
@@ -113,10 +98,7 @@ mod key_tests {
     }
 
     fn get_hash160_length(input: &str) -> usize {
-        Key::from_str(input)
-            .unwrap()
-            .hash160()
-            .len()
+        Vec::from_str(input).unwrap().hash160().len()
     }
 
     #[test]
@@ -133,7 +115,7 @@ mod key_tests {
     #[test]
     fn hash160_from_compressed_pubkey() {
         assert_eq!(
-            Key::from_str(COMPRESSED_PUBLIC_KEY).unwrap().hash160(),
+            Vec::from_str(COMPRESSED_PUBLIC_KEY).unwrap().hash160(),
             hex::decode("bbc1e42a39d05a4cc61752d6963b7f69d09bb27b").unwrap(),
         )
     }
@@ -141,7 +123,7 @@ mod key_tests {
     #[test]
     fn hash160_from_uncompressed_pubkey() {
         assert_eq!(
-            Key::from_str(UNCOMPRESSED_PUBLIC_KEY).unwrap().hash160(),
+            Vec::from_str(UNCOMPRESSED_PUBLIC_KEY).unwrap().hash160(),
             hex::decode("211b74ca4686f81efda5641767fc84ef16dafe0b").unwrap(),
         )
     }

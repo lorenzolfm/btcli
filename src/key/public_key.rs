@@ -4,8 +4,8 @@ use secp256k1::{rand, Secp256k1, SecretKey};
 type Coordinates = (String, String);
 
 pub struct PublicKey {
-    compressed: Key,
-    uncompressed: Key,
+    compressed: Vec<u8>,
+    uncompressed: Vec<u8>,
 }
 
 impl PublicKey {
@@ -13,35 +13,35 @@ impl PublicKey {
         let secp = Secp256k1::new();
         let pubkey = secp256k1::PublicKey::from_secret_key(
             &secp,
-            &SecretKey::from_slice(&pk.key.bytes).unwrap(),
+            &SecretKey::from_slice(&pk.key).unwrap(),
         );
 
         PublicKey {
-            compressed: Key { bytes: pubkey.serialize().to_vec() },
-            uncompressed: Key { bytes: pubkey.serialize_uncompressed().to_vec() },
+            compressed: pubkey.serialize().to_vec(),
+            uncompressed: pubkey.serialize_uncompressed().to_vec(),
         }
     }
 
     fn get_address_from_compressed(self) -> String {
-        let mut pkh = Key { bytes: self.compressed.hash160() };
-        pkh.bytes.insert(0, 0x00);
+        let mut pkh = self.compressed.hash160();
+        pkh.insert(0, 0x00);
         pkh.append_checksum();
 
-        bs58::encode(&pkh.bytes).into_string()
+        bs58::encode(&pkh).into_string()
     }
 
     fn get_address_from_uncompressed(self) -> String {
-        let mut pkh = Key { bytes: self.uncompressed.hash160() };
-        pkh.bytes.insert(0, 0x00);
+        let mut pkh = self.uncompressed.hash160();
+        pkh.insert(0, 0x00);
         pkh.append_checksum();
 
-        bs58::encode(&pkh.bytes).into_string()
+        bs58::encode(&pkh).into_string()
     }
 
     fn get_coordinates(self) -> Coordinates {
         (
-            hex::encode(&self.uncompressed.bytes[1..33]),
-            hex::encode(&self.uncompressed.bytes[33..]),
+            hex::encode(&self.uncompressed[1..33]),
+            hex::encode(&self.uncompressed[33..]),
         )
     }
 
@@ -57,8 +57,8 @@ impl PublicKey {
             );
 
             let pubkey = PublicKey {
-                compressed: Key { bytes: pubkey.serialize().to_vec() },
-                uncompressed: Key { bytes: pubkey.serialize().to_vec() },
+                compressed: pubkey.serialize().to_vec(),
+                uncompressed: pubkey.serialize().to_vec(),
             };
 
             let compressed_address = &pubkey.get_address_from_compressed();
@@ -79,7 +79,7 @@ mod public_key_tests {
     #[test]
     fn should_return_expected_keys() {
         let pk = PrivateKey::from_str(constants::PRIVATE_KEY).unwrap();
-        let public_key = PublicKey::from_private_key(pk);
+        let mut public_key = PublicKey::from_private_key(pk);
 
         assert_eq!(
             public_key.compressed.as_hex_string(),
