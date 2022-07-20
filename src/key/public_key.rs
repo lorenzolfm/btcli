@@ -4,12 +4,12 @@ use secp256k1::{rand, Secp256k1, SecretKey};
 type Coordinates = (String, String);
 
 pub struct PublicKey {
-    compressed: Vec<u8>,
-    uncompressed: Vec<u8>,
+    pub compressed: Vec<u8>,
+    pub uncompressed: Vec<u8>,
 }
 
 impl PublicKey {
-    fn from_private_key(pk: PrivateKey) -> Self {
+    pub fn from_private_key(pk: PrivateKey) -> Self {
         let secp = Secp256k1::new();
         let pubkey = secp256k1::PublicKey::from_secret_key(
             &secp,
@@ -38,7 +38,7 @@ impl PublicKey {
         bs58::encode(&pkh).into_string()
     }
 
-    fn get_coordinates(self) -> Coordinates {
+    pub fn get_coordinates(self) -> Coordinates {
         (
             hex::encode(&self.uncompressed[1..33]),
             hex::encode(&self.uncompressed[33..]),
@@ -68,6 +68,24 @@ impl PublicKey {
                 return compressed_address.to_string()
             }
         }
+    }
+
+    /// Returns a new address from an compressed public key, derived from a random secret key.
+    pub fn get_new_address() -> String {
+        let secp = Secp256k1::new();
+        let secret_key = SecretKey::new(&mut rand::thread_rng());
+
+        let pubkey = secp256k1::PublicKey::from_secret_key(
+            &secp,
+            &secret_key,
+        );
+
+        let pubkey = PublicKey {
+            compressed: pubkey.serialize().to_vec(),
+            uncompressed: pubkey.serialize().to_vec(),
+        };
+
+        pubkey.get_address_from_compressed()
     }
 }
 
@@ -134,5 +152,13 @@ mod public_key_tests {
         let vanity_address = PublicKey::vanity_address(prefix);
 
         assert_eq!(&vanity_address[0..3], "1Lo");
+    }
+
+    #[test]
+    fn should_return_an_address() {
+        let address = PublicKey::get_new_address();
+
+        assert_eq!(&address[0..1], "1");
+        assert_eq!(address.len(), 34);
     }
 }

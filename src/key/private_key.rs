@@ -29,7 +29,7 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    /// Returns a private key struct given it's bytes.
+    /// Returns a private key struct given it's bytes as a string slice.
     ///
     /// # Arguments
     ///
@@ -56,36 +56,43 @@ impl PrivateKey {
     }
 
     /// Returns a hexadecimal string representing the private key
-    fn as_hex_string(&mut self) -> String {
-        self.key.as_hex_string()
+    fn as_hex_string(&self) -> String {
+        let mut key = self.key.clone();
+
+        key.as_hex_string()
     }
 
     /// Returns a hexadecimal string representing the "compressed" private key.
-    fn as_hex_compressed_string(mut self) -> String {
-        self.key.push(0x01);
+    pub fn as_hex_compressed_string(&self) -> String {
+        let mut key = self.key.clone();
 
-        self.key.as_hex_string()
+        key.push(0x01);
+        key.as_hex_string()
     }
 
     /// Returns a bs58 encoded string representing the private key in the WIF format.
-    fn as_wif(&mut self) -> String {
-        self.key.insert(0, 0x80);
-        self.key.append_checksum();
+    pub fn as_wif(&self) -> String {
+        let mut key = self.key.clone();
 
-        bs58::encode(&self.key).into_string()
+        key.insert(0, 0x80);
+        key.append_checksum();
+
+        bs58::encode(key).into_string()
     }
 
     /// Returns a bs58 encoded string representing the private key in the WIF-compressed format.
-    fn as_wif_compressed(&mut self) -> String {
-        self.key.insert(0, 0x80);
-        self.key.push(0x01);
-        self.key.append_checksum();
+    pub fn as_wif_compressed(&self) -> String {
+        let mut key = self.key.clone();
 
-        bs58::encode(&self.key).into_string()
+        key.insert(0, 0x80);
+        key.push(0x01);
+        key.append_checksum();
+
+        bs58::encode(key).into_string()
     }
 
     /// Returns the private key as decimal string
-    fn as_decimals(self) -> String {
+    pub fn as_decimals(self) -> String {
         format!("{}", BigUint::from_bytes_be(&self.key))
     }
 }
@@ -97,14 +104,14 @@ mod private_key_tests {
 
     #[test]
     fn constructor_should_return_private_key() {
-        let mut pk = PrivateKey::from_str(PRIVATE_KEY).unwrap();
+        let pk = PrivateKey::from_str(PRIVATE_KEY).unwrap();
 
         assert_eq!(pk.as_hex_string(), PRIVATE_KEY.to_string())
     }
 
     #[test]
     fn should_pad_if_input_is_not_32_bytes() {
-        let mut pk = PrivateKey::from_str("123").unwrap();
+        let pk = PrivateKey::from_str("123").unwrap();
         let expected = "0000000000000000000000000000000000000000000000000000000000000123";
 
         assert_eq!(pk.as_hex_string(), expected);
