@@ -64,6 +64,27 @@ enum Commands {
         /// The private key as a hexadecimal string
         #[clap(value_parser)]
         private_key: String,
+    },
+
+    /// Logs the address generated from the compressed public key
+    GetAddressFromCompressed {
+        /// The private key as a hexadecimal string
+        #[clap(value_parser)]
+        private_key: String,
+    },
+
+    /// Logs the address generate from the uncompressed public key
+    GetAddressFromUncompressed {
+        /// The private key as a hexadecimal string
+        #[clap(value_parser)]
+        private_key: String,
+    },
+
+    /// Generates a vanity address given a prefix
+    GenVanityAddress {
+        /// The prefix wanted
+        #[clap(value_parser)]
+        prefix: String,
     }
 }
 
@@ -99,7 +120,6 @@ fn main() {
         },
         Commands::PubKeyFromPrivate { private_key } => {
             let priv_key = PrivateKey::from_str(&private_key).unwrap();
-
             let mut pub_key = PublicKey::from_private_key(priv_key);
 
             println!("Compressed key {}", pub_key.compressed.as_hex_string());
@@ -107,12 +127,28 @@ fn main() {
         }
         Commands::GetPubKeyCoords { private_key } => {
             let priv_key = PrivateKey::from_str(&private_key).unwrap();
-
             let pub_key = PublicKey::from_private_key(priv_key);
 
             let (x, y) = pub_key.get_coordinates();
 
             println!("x = {}, y = {}", x, y);
+        }
+        Commands::GetAddressFromCompressed { private_key } => {
+            let priv_key = PrivateKey::from_str(&private_key).unwrap();
+            let pub_key = PublicKey::from_private_key(priv_key);
+
+            println!("{}", pub_key.get_address_from_compressed())
+        }
+        Commands::GetAddressFromUncompressed { private_key } => {
+            let priv_key = PrivateKey::from_str(&private_key).unwrap();
+            let pub_key = PublicKey::from_private_key(priv_key);
+
+            println!("{}", pub_key.get_address_from_uncompressed())
+        }
+        Commands::GenVanityAddress { prefix } => {
+            let vanity_address = PublicKey::vanity_address(&prefix);
+
+            println!("{}", vanity_address);
         }
     }
 }

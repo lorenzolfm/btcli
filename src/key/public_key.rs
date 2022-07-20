@@ -22,7 +22,7 @@ impl PublicKey {
         }
     }
 
-    fn get_address_from_compressed(self) -> String {
+    pub fn get_address_from_compressed(self) -> String {
         let mut pkh = self.compressed.hash160();
         pkh.insert(0, 0x00);
         pkh.append_checksum();
@@ -30,7 +30,7 @@ impl PublicKey {
         bs58::encode(&pkh).into_string()
     }
 
-    fn get_address_from_uncompressed(self) -> String {
+    pub fn get_address_from_uncompressed(self) -> String {
         let mut pkh = self.uncompressed.hash160();
         pkh.insert(0, 0x00);
         pkh.append_checksum();
@@ -45,7 +45,7 @@ impl PublicKey {
         )
     }
 
-    fn vanity_address(vanity: &str) -> String {
+    pub fn vanity_address(vanity: &str) -> String {
         loop {
             let secp = Secp256k1::new();
 
