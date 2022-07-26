@@ -159,6 +159,7 @@ mod public_key_tests {
         let address = PublicKey::get_new_address();
 
         assert_eq!(&address[0..1], "1");
-        assert_eq!(address.len(), 34);
+        assert!(address.len() >= 26);
+        assert!(address.len() <= 36);
     }
 }
