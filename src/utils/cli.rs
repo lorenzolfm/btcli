@@ -21,6 +21,12 @@ enum Commands {
 
     /// Generates and logs an address from a random private key.
     GetAddress,
+
+    /// Computes a vanity address given the desired prefix.
+    GetVanity {
+        #[clap(value_parser)]
+        prefix: String,
+    }
 }
 
 #[derive(Debug, Args)]
@@ -37,6 +43,7 @@ pub fn run() {
         Commands::GetUncompressedAddressFrom(arg) => log_uncompressed_address(&arg.private_key),
         Commands::GetCoordinatesFrom(arg) => log_coordinates(&arg.private_key),
         Commands::GetAddress => println!("{}", PublicKey::get_new_address()),
+        Commands::GetVanity { prefix } => println!("{}", PublicKey::vanity_address(&prefix)),
     }
 }
 
