@@ -22,9 +22,12 @@ pub fn run() {
 
     match cli.commands {
         Commands::GetAddressFrom { private_key } => {
-            let pub_key = PublicKey::from_private_key_string(&private_key);
+            let k = PublicKey::from_private_key_string(&private_key);
 
-            println!("{}", pub_key.get_address_from_compressed());
+            match k {
+                Ok(pubkey) => println!("{}", pubkey.get_address_from_compressed()),
+                Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
+            }
         }
     }
 }
