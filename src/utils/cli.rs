@@ -16,8 +16,11 @@ enum Commands {
     /// Logs the address derived from a uncompressed public key, given the private key.
     GetUncompressedAddressFrom(PrivKeyArg),
 
-    /// Logs the public key coordinates, given the private key
+    /// Logs the public key coordinates, given the private key.
     GetCoordinatesFrom(PrivKeyArg),
+
+    /// Generates and logs an address from a random private key.
+    GetAddress,
 }
 
 #[derive(Debug, Args)]
@@ -33,6 +36,7 @@ pub fn run() {
         Commands::GetCompressedAddressFrom(arg) => log_compressed_address(&arg.private_key),
         Commands::GetUncompressedAddressFrom(arg) => log_uncompressed_address(&arg.private_key),
         Commands::GetCoordinatesFrom(arg) => log_coordinates(&arg.private_key),
+        Commands::GetAddress => println!("{}", PublicKey::get_new_address()),
     }
 }
 
