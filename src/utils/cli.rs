@@ -15,8 +15,10 @@ enum Commands {
 
     /// Logs the address derived from a uncompressed public key, given the private key.
     GetUncompressedAddressFrom(PrivKeyArg),
-}
 
+    /// Logs the public key coordinates, given the private key
+    GetCoordinatesFrom(PrivKeyArg),
+}
 
 #[derive(Debug, Args)]
 struct PrivKeyArg {
@@ -30,6 +32,7 @@ pub fn run() {
     match cli.commands {
         Commands::GetCompressedAddressFrom(arg) => log_compressed_address(&arg.private_key),
         Commands::GetUncompressedAddressFrom(arg) => log_uncompressed_address(&arg.private_key),
+        Commands::GetCoordinatesFrom(arg) => log_coordinates(&arg.private_key),
     }
 }
 
@@ -47,6 +50,20 @@ fn log_uncompressed_address(private_key: &str) {
 
     match k {
         Ok(pubkey) => println!("{}", pubkey.get_address_from_uncompressed()),
+        Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
+    }
+}
+
+fn log_coordinates(private_key: &str) {
+    let k = PublicKey::from_private_key_string(&private_key);
+
+    match k {
+        Ok(pubkey) => {
+            let (x, y) = pubkey.get_coordinates();
+
+            println!("x = {}", x);
+            println!("y = {}", y);
+        }
         Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
     }
 }
