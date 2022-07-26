@@ -69,9 +69,9 @@ impl PublicKey {
             };
 
             let compressed_address = &pubkey.get_address_from_compressed();
-            let prexix = &compressed_address.as_str()[0..vanity.len()];
+            let prefix = &compressed_address.as_str()[1 .. vanity.len() + 1];
 
-            if prexix == vanity {
+            if prefix == vanity {
                 return compressed_address.to_string()
             }
         }
@@ -180,10 +180,10 @@ mod public_key_tests {
 
     #[test]
     fn should_return_a_vanity_address() {
-        let prefix = "1Lo";
+        let prefix = "Lo";
         let vanity_address = PublicKey::vanity_address(prefix);
 
-        assert_eq!(&vanity_address[0..3], "1Lo");
+        assert_eq!(&vanity_address[1..3], "Lo");
     }
 
     #[test]
