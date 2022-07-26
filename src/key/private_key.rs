@@ -1,5 +1,3 @@
-use num::BigUint;
-
 use crate::key::constants::N;
 use crate::key::Key;
 use crate::utils::ToByteArray;
@@ -92,8 +90,8 @@ impl PrivateKey {
     }
 
     /// Returns the private key as decimal string
-    pub fn as_decimals(self) -> String {
-        format!("{}", BigUint::from_bytes_be(&self.key))
+    pub fn as_decimal(self) -> String {
+        self.key.as_decimal()
     }
 }
 
@@ -191,7 +189,7 @@ mod private_key_tests {
         let expected = "13840170145645816737842251482747434280357113762558403558088249138233286766301";
 
         assert_eq!(
-            pk.as_decimals(),
+            pk.as_decimal(),
             expected,
         )
     }
