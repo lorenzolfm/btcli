@@ -1,8 +1,9 @@
-use crate::key::{Key, PrivateKey};
+use crate::key::{Key, PrivateKey, PrivateKeyError};
 use secp256k1::{rand, Secp256k1, SecretKey};
 
 type Coordinates = (String, String);
 
+#[derive(Debug, PartialEq)]
 pub struct PublicKey {
     pub compressed: Vec<u8>,
     pub uncompressed: Vec<u8>,
@@ -20,6 +21,12 @@ impl PublicKey {
             compressed: pubkey.serialize().to_vec(),
             uncompressed: pubkey.serialize_uncompressed().to_vec(),
         }
+    }
+
+    pub fn from_private_key_string(pk: &str) -> Result<Self, PrivateKeyError> {
+        let pk = PrivateKey::from_str(pk)?;
+
+        Ok(PublicKey::from_private_key(pk))
     }
 
     pub fn get_address_from_compressed(self) -> String {
@@ -107,6 +114,31 @@ mod public_key_tests {
             public_key.uncompressed.as_hex_string(),
             constants::UNCOMPRESSED_PUBLIC_KEY,
         )
+    }
+
+    #[test]
+    fn should_return_expected_keys_given_a_private_key_as_string() {
+        let pk = PublicKey::from_private_key_string(
+            constants::PRIVATE_KEY,
+        ).unwrap();
+
+        assert_eq!(
+            pk.compressed,
+            hex::decode(constants::COMPRESSED_PUBLIC_KEY).unwrap()
+        );
+        assert_eq!(
+            pk.uncompressed,
+            hex::decode(constants::UNCOMPRESSED_PUBLIC_KEY).unwrap()
+        )
+    }
+
+    #[test]
+    fn testing_for_error() {
+        let r = PublicKey::from_private_key_string(
+            constants::INVALID_PRIVATE_KEY
+        );
+
+        assert_eq!(r, Err(PrivateKeyError::GreaterThanCurveOrder))
     }
 
     #[test]
