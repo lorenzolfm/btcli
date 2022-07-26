@@ -1,4 +1,5 @@
 use crypto::{digest::Digest, ripemd160::Ripemd160, sha2::Sha256};
+use num::BigUint;
 
 use crate::utils::ToByteArray;
 
@@ -7,6 +8,7 @@ pub trait Key {
     fn as_hex_string(&mut self) -> String;
     fn append_checksum(&mut self) -> ();
     fn hash160(self) -> Vec<u8>;
+    fn as_decimal(self) -> String;
 }
 
 impl Key for Vec<u8> {
@@ -45,21 +47,22 @@ impl Key for Vec<u8> {
 
         buff[0..20].to_vec()
     }
+
+    fn as_decimal(self) -> String {
+        format!("{}", BigUint::from_bytes_be(&self))
+    }
 }
 
 #[cfg(test)]
 mod keys_tests {
     use super::*;
-    use crate::key::{PRIVATE_KEY, UNCOMPRESSED_PUBLIC_KEY, COMPRESSED_PUBLIC_KEY};
+    use crate::key::{COMPRESSED_PUBLIC_KEY, PRIVATE_KEY, UNCOMPRESSED_PUBLIC_KEY};
 
     #[test]
     fn test_constructor() {
         assert_eq!(Vec::from_str("0").unwrap(), vec![0x00]);
         assert_eq!(Vec::from_str("00").unwrap(), vec![0x00]);
-        assert_eq!(
-            Vec::from_str("012345").unwrap(),
-            vec![0x01, 0x23, 0x45]
-        )
+        assert_eq!(Vec::from_str("012345").unwrap(), vec![0x01, 0x23, 0x45])
     }
 
     #[test]
@@ -126,5 +129,12 @@ mod keys_tests {
             Vec::from_str(UNCOMPRESSED_PUBLIC_KEY).unwrap().hash160(),
             hex::decode("211b74ca4686f81efda5641767fc84ef16dafe0b").unwrap(),
         )
+    }
+
+    #[test]
+    fn as_decimal() {
+        let actual = Vec::from_str("ff").unwrap().as_decimal();
+
+        assert_eq!(actual, "255",)
     }
 }
