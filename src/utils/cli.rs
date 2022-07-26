@@ -1,5 +1,5 @@
 use crate::key::PublicKey;
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -9,25 +9,44 @@ struct Cli {
 }
 
 #[derive(Debug, Subcommand)]
-enum  Commands {
-    /// Logs the address derived from a given private key
-    GetAddressFrom {
-        #[clap(value_parser)]
-        private_key: String,
-    }
+enum Commands {
+    /// Logs the address derived from a compressed public key, given private key.
+    GetCompressedAddressFrom(PrivKeyArg),
+
+    /// Logs the address derived from a uncompressed public key, given the private key.
+    GetUncompressedAddressFrom(PrivKeyArg),
+}
+
+
+#[derive(Debug, Args)]
+struct PrivKeyArg {
+    #[clap(value_parser)]
+    private_key: String,
 }
 
 pub fn run() {
     let cli = Cli::parse();
 
     match cli.commands {
-        Commands::GetAddressFrom { private_key } => {
-            let k = PublicKey::from_private_key_string(&private_key);
+        Commands::GetCompressedAddressFrom(arg) => log_compressed_address(&arg.private_key),
+        Commands::GetUncompressedAddressFrom(arg) => log_uncompressed_address(&arg.private_key),
+    }
+}
 
-            match k {
-                Ok(pubkey) => println!("{}", pubkey.get_address_from_compressed()),
-                Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
-            }
-        }
+fn log_compressed_address(private_key: &str) {
+    let k = PublicKey::from_private_key_string(&private_key);
+
+    match k {
+        Ok(pubkey) => println!("{}", pubkey.get_address_from_compressed()),
+        Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
+    }
+}
+
+fn log_uncompressed_address(private_key: &str) {
+    let k = PublicKey::from_private_key_string(&private_key);
+
+    match k {
+        Ok(pubkey) => println!("{}", pubkey.get_address_from_uncompressed()),
+        Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
     }
 }
