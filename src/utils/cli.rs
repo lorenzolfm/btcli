@@ -1,4 +1,4 @@
-use crate::key::PublicKey;
+use crate::key::{PublicKey, PrivateKey};
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
@@ -26,7 +26,16 @@ enum Commands {
     GetVanity {
         #[clap(value_parser)]
         prefix: String,
-    }
+    },
+
+    /// Logs the compressed private key as a hex string
+    GetHexCompressed(PrivKeyArg),
+
+    /// Logs the private key using the "Wallet Import Format".
+    GetWif(PrivKeyArg),
+
+    /// Logs the private key using the "Compressed Wallet Import Format"
+    GetWifCompressed(PrivKeyArg),
 }
 
 #[derive(Debug, Args)]
@@ -44,6 +53,10 @@ pub fn run() {
         Commands::GetCoordinatesFrom(arg) => log_coordinates(&arg.private_key),
         Commands::GetAddress => println!("{}", PublicKey::get_new_address()),
         Commands::GetVanity { prefix } => println!("{}", PublicKey::vanity_address(&prefix)),
+
+        Commands::GetHexCompressed(arg) => log_hex_compressed_private_key(&arg.private_key),
+        Commands::GetWif(arg) => log_wif_format(&arg.private_key),
+        Commands::GetWifCompressed(arg) => log_wif_compressed_format(&arg.private_key),
     }
 }
 
@@ -76,5 +89,32 @@ fn log_coordinates(private_key: &str) {
             println!("y = {}", y);
         }
         Err(error) => eprintln!("Error getting address from private key string: {:?}", error),
+    }
+}
+
+fn log_hex_compressed_private_key(private_key: &str) {
+    let r = PrivateKey::from_str(private_key);
+
+    match r {
+        Ok(privkey) => println!("Compressed public key: {}", privkey.as_hex_compressed_string()),
+        Err(error) => eprintln!("Error converting input to private key: {:?}", error),
+    }
+}
+
+fn log_wif_format(private_key: &str) {
+    let r = PrivateKey::from_str(private_key);
+
+    match r {
+        Ok(privkey) => println!("WIF: {}", privkey.as_wif()),
+        Err(error) => eprintln!("Error converting input to private key: {:?}", error),
+    }
+}
+
+fn log_wif_compressed_format(private_key: &str) {
+    let r = PrivateKey::from_str(private_key);
+
+    match r {
+        Ok(privkey) => println!("WIF compressed: {}", privkey.as_wif_compressed()),
+        Err(error) => eprintln!("Error converting input to private key: {:?}", error),
     }
 }
