@@ -1,4 +1,6 @@
 use crate::key::{PublicKey, PrivateKey};
+use crate::base58decoder::base58decode;
+
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
@@ -36,6 +38,12 @@ enum Commands {
 
     /// Logs the private key using the "Compressed Wallet Import Format"
     GetWifCompressed(PrivKeyArg),
+
+    /// Decodes and logs the provided input
+    Base58Decode {
+        #[clap(value_parser)]
+        encoded: String,
+    }
 }
 
 #[derive(Debug, Args)]
@@ -57,6 +65,8 @@ pub fn run() {
         Commands::GetHexCompressed(arg) => log_hex_compressed_private_key(&arg.private_key),
         Commands::GetWif(arg) => log_wif_format(&arg.private_key),
         Commands::GetWifCompressed(arg) => log_wif_compressed_format(&arg.private_key),
+
+        Commands::Base58Decode { encoded } => log_base58_decoded(&encoded)
     }
 }
 
@@ -116,5 +126,20 @@ fn log_wif_compressed_format(private_key: &str) {
     match r {
         Ok(privkey) => println!("WIF compressed: {}", privkey.as_wif_compressed()),
         Err(error) => eprintln!("Error converting input to private key: {:?}", error),
+    }
+}
+
+fn log_base58_decoded(encoded: &str) {
+    let r = base58decode(encoded);
+
+    match r {
+        Ok(decoded) => {
+            println!("Version: {}", decoded.0);
+            println!("Payload: {}", decoded.1);
+            println!("Checksum: {}", decoded.2);
+        },
+        Err(error) => {
+            eprintln!("Error decoding input: {:?}", error);
+        }
     }
 }
